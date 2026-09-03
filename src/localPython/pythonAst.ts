@@ -74,13 +74,21 @@ for node in module.body:
             typing_imports.append({"line": node.lineno, "endLine": node.end_lineno, "names": [alias.name for alias in node.names]})
 
 insertion_line = 0
+# Keep LeetCode's leading comment metadata at the top of a generated source
+# file. It is not part of the AST body, but the upstream CLI uses it to
+# identify the problem on later remote actions.
+for leading_line in source.splitlines():
+    if leading_line.strip() == "" or leading_line.lstrip().startswith("#"):
+        insertion_line += 1
+        continue
+    break
 body = module.body
 index = 0
 if body and isinstance(body[0], ast.Expr) and isinstance(getattr(body[0], "value", None), ast.Constant) and isinstance(body[0].value.value, str):
-    insertion_line = body[0].end_lineno
+    insertion_line = max(insertion_line, body[0].end_lineno)
     index = 1
 while index < len(body) and isinstance(body[index], ast.ImportFrom) and body[index].module == "__future__":
-    insertion_line = body[index].end_lineno
+    insertion_line = max(insertion_line, body[index].end_lineno)
     index += 1
 
 parameters = []

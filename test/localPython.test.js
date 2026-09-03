@@ -151,6 +151,7 @@ async function testGeneratedStarterPreparation() {
         const prepared = await prepareNewPythonStarter(python, solutionPath);
         assert.deepStrictEqual(prepared.addedPlatformTypes, ["ListNode"]);
         const saved = fs.readFileSync(solutionPath, "utf8");
+        assert.match(saved, /^# @lc app=leetcode id=206 lang=python3\n# @lc code=start\nfrom typing import Optional/m);
         assert.match(saved, /from typing import Optional/);
         assert.match(saved, /class ListNode:/);
         assert.match(saved, /        pass/);
