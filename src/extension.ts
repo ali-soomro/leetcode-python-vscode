@@ -11,6 +11,7 @@ import * as show from "./commands/show";
 import * as star from "./commands/star";
 import * as submit from "./commands/submit";
 import * as test from "./commands/test";
+import * as localPython from "./commands/localPython";
 import { explorerNodeManager } from "./explorer/explorerNodeManager";
 import { LeetCodeNode } from "./explorer/LeetCodeNode";
 import { leetCodeTreeDataProvider } from "./explorer/LeetCodeTreeDataProvider";
@@ -26,8 +27,19 @@ import { leetCodeSubmissionProvider } from "./webview/leetCodeSubmissionProvider
 import { markdownEngine } from "./webview/markdownEngine";
 import TrackData from "./utils/trackingUtils";
 import { globalState } from "./globalState";
+import { localPythonOutput } from "./localPython/output";
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
+    // The Python-local workflow deliberately has no account, browser, or
+    // bundled CLI dependency. Register it before the inherited remote feature
+    // initialization so it remains available if that legacy setup fails.
+    context.subscriptions.push(
+        localPythonOutput,
+        codeLensController,
+        vscode.commands.registerCommand("leetcodePythonLocal.importStarter", () => localPython.importStarterFromClipboard()),
+        vscode.commands.registerCommand("leetcodePythonLocal.runLocal", (uri?: vscode.Uri) => localPython.runActivePythonSolution(uri)),
+        vscode.commands.registerCommand("leetcodePythonLocal.addCase", (uri?: vscode.Uri) => localPython.addLocalAssertionCase(uri)),
+    );
     try {
         if (!(await leetCodeExecutor.meetRequirements(context))) {
             throw new Error("The environment doesn't meet requirements.");
@@ -49,7 +61,6 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
             leetCodeSolutionProvider,
             leetCodeExecutor,
             markdownEngine,
-            codeLensController,
             explorerNodeManager,
             vscode.window.registerFileDecorationProvider(leetCodeTreeItemDecorationProvider),
             vscode.window.createTreeView("leetCodeExplorer", { treeDataProvider: leetCodeTreeDataProvider, showCollapseAll: true }),

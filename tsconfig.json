@@ -8,6 +8,16 @@
         ],
         "sourceMap": true,
         "rootDir": ".",
+        "types": [
+            "node",
+            "vscode",
+            "fs-extra",
+            "lodash",
+            "markdown-it",
+            "linkify-it",
+            "mocha",
+            "require-from-string"
+        ],
         "noUnusedLocals": true,
         "noImplicitThis": true,
         "noImplicitReturns": true,

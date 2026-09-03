@@ -1,6 +1,66 @@
-# LeetCode
+# LeetCode Python Local (experimental)
 
-> Solve LeetCode problems in VS Code
+> An unofficial, local-first Python workflow for LeetCode-style problems in VS Code.
+
+This public repository is an experimental MIT-licensed fork of
+[LeetCode-OpenSource/vscode-leetcode](https://github.com/LeetCode-OpenSource/vscode-leetcode).
+It is not affiliated with, endorsed by, or supported by LeetCode.
+
+The active work is adding a separate Python-local workflow: clipboard starter
+import, Pylance-friendly source preparation, and explicit local assertions.
+It does not claim that a local result is a LeetCode acceptance result. The
+inherited remote authentication, submission, telemetry, and provider paths are
+not part of this experimental workflow and must be separately audited before
+any marketplace release.
+
+## Experimental Python-local workflow
+
+The initial local workflow is deliberately separate from the inherited remote
+`Test` and `Submit` actions:
+
+1. Open a folder in VS Code, copy the **Python starter code** from a LeetCode
+   problem, then run **LeetCode Python Local: Import Python Starter from
+   Clipboard**.
+2. The importer parses the clipboard locally with your configured Python
+   interpreter and creates `.leetcode-python/problems/.../solution.py` plus
+   versioned `problem.json` and `cases.json` sidecars. It never sends clipboard
+   text to a service.
+3. Use **LeetCode Python Local: Add Local Assertion Case** to enter a JSON
+   argument array and explicit expected return value. With no saved case,
+   **Run Locally** accepts an ad-hoc argument array and labels the result
+   `Ran locally` rather than accepted.
+4. Run **LeetCode Python Local: Run Locally** from the Command Palette, editor
+   context menu, or Python LeetCode CodeLens. It runs only in a trusted
+   workspace, with a timeout and output cap.
+
+For local linked-list and tree arguments, use explicit JSON tags in a case:
+
+```json
+[
+  { "$type": "ListNode", "values": [1, 2, 3] }
+]
+```
+
+```json
+[
+  { "$type": "TreeNode", "levelOrder": [3, 9, 20, null, null, 15, 7] }
+]
+```
+
+Candidate A source preparation adds missing `typing` imports and concrete
+`ListNode`/`TreeNode` definitions only for imported clipboard starters that
+need them. The saved source remains designed to paste back into LeetCode
+unchanged; it was manually validated against primitive, linked-list, and tree
+examples during the E4 experiment.
+
+To develop this branch, run `npm test` and `npm run lint`. A Marketplace/VSIX
+release is intentionally deferred until the fork has a distinct publisher,
+namespaced public IDs, a neutral icon, and an audit of inherited remote code.
+
+## Upstream README
+
+The retained upstream documentation below describes the inherited extension;
+some of its remote features and official links do not describe this fork.
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/LeetCode-OpenSource/vscode-leetcode/master/resources/LeetCode.png" alt="">
