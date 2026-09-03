@@ -16,6 +16,8 @@ import * as path from "path";
 const DEFAULT_TIMEOUT_MS = 3_000;
 const DEFAULT_OUTPUT_CAP_BYTES = 1_024 * 1_024;
 const MIN_OUTPUT_CAP_BYTES = 4_096;
+const DEFAULT_RECURSION_LIMIT = 2_000;
+const MIN_RECURSION_LIMIT = 100;
 const TERMINATION_GRACE_MS = 250;
 const FORCE_SETTLE_AFTER_MS = 2_000;
 const RESULT_MARKER = "__LEETCODE_PYTHON_LOCAL_RESULT__";
@@ -49,6 +51,8 @@ export interface LocalPythonRunRequest {
     readonly timeoutMs?: number;
     /** Defaults to 1MiB across the child process's stdout and stderr pipes. */
     readonly outputCapBytes?: number;
+    /** Defaults to 2,000 and is applied before user-module execution. */
+    readonly recursionLimit?: number;
 }
 
 /** The request shape command code normally needs to construct. */
@@ -63,6 +67,8 @@ export interface PythonRunOptions {
     readonly timeoutMs?: number;
     /** Maximum combined stdout/stderr pipe output; defaults to 1MiB. */
     readonly outputLimitBytes?: number;
+    /** Python recursion limit for the local child process. */
+    readonly recursionLimit?: number;
 }
 
 export interface LocalPythonProcessInfo {
@@ -115,6 +121,7 @@ interface HarnessRequest {
     readonly args: LocalPythonValue[];
     readonly captureLimitBytes: number;
     readonly protocolLimitBytes: number;
+    readonly recursionLimit: number;
 }
 
 /**
@@ -343,12 +350,14 @@ def load_solution(solution_path):
 def run(request):
     result = empty_result()
     capture_limit = max(0, int(request.get("captureLimitBytes", 65536)))
+    recursion_limit = max(100, int(request.get("recursionLimit", 2000)))
     stdout_buffer = CappedTextBuffer(capture_limit)
     stderr_buffer = CappedTextBuffer(capture_limit)
     module = None
     args = None
 
     try:
+        sys.setrecursionlimit(recursion_limit)
         solution_path = request["solutionPath"]
         method_name = request["method"]
         raw_args = request["args"]
@@ -447,6 +456,7 @@ if __name__ == "__main__":
 export async function runLocalPythonSolution(request: LocalPythonRunRequest): Promise<LocalPythonRunResult> {
     const timeoutMs = normaliseTimeout(request.timeoutMs);
     const outputCapBytes = normaliseOutputCap(request.outputCapBytes);
+    const recursionLimit = normaliseRecursionLimit(request.recursionLimit);
     const harnessRequest: HarnessRequest = {
         solutionPath: request.solutionPath,
         method: request.method,
@@ -454,6 +464,7 @@ export async function runLocalPythonSolution(request: LocalPythonRunRequest): Pr
         // Keep the final protocol far below the Node-side pipe cap.
         captureLimitBytes: Math.max(256, Math.floor(outputCapBytes / 8)),
         protocolLimitBytes: Math.max(1_024, Math.floor(outputCapBytes / 2)),
+        recursionLimit,
     };
 
     let child: childProcess.ChildProcess;
@@ -653,6 +664,7 @@ export function runLocalPython(
         args: request.args,
         timeoutMs: options.timeoutMs,
         outputCapBytes: options.outputLimitBytes,
+        recursionLimit: options.recursionLimit,
     });
 }
 
@@ -668,6 +680,13 @@ function normaliseOutputCap(value: number | undefined): number {
         return DEFAULT_OUTPUT_CAP_BYTES;
     }
     return Math.max(MIN_OUTPUT_CAP_BYTES, Math.floor(value));
+}
+
+function normaliseRecursionLimit(value: number | undefined): number {
+    if (value === undefined || !isFinite(value)) {
+        return DEFAULT_RECURSION_LIMIT;
+    }
+    return Math.max(MIN_RECURSION_LIMIT, Math.floor(value));
 }
 
 function parseHarnessResult(stdout: string): PythonHarnessResult | undefined {

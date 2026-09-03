@@ -81,7 +81,7 @@ export async function runActivePythonSolution(uri?: vscode.Uri): Promise<void> {
         const rawResult: LocalPythonRunResult = await runLocalPython(
             pythonPath,
             { solutionPath: document.uri.fsPath, method: starter.methodName, args: selectedCase.args },
-            { timeoutMs: getTimeoutMs(), outputLimitBytes: getOutputLimitBytes() },
+            { timeoutMs: getTimeoutMs(), outputLimitBytes: getOutputLimitBytes(), recursionLimit: getRecursionLimit() },
         );
         const result: PythonRunResult = normalizeRunnerResult(rawResult);
         if (result.ok) {
@@ -158,6 +158,10 @@ function getTimeoutMs(): number {
 
 function getOutputLimitBytes(): number {
     return vscode.workspace.getConfiguration("leetcodePythonLocal").get<number>("outputLimitBytes", 1024 * 1024);
+}
+
+function getRecursionLimit(): number {
+    return vscode.workspace.getConfiguration("leetcodePythonLocal").get<number>("recursionLimit", 2000);
 }
 
 async function getWorkspaceRoot(): Promise<string | undefined> {
@@ -301,9 +305,10 @@ function normalizeRunnerResult(result: LocalPythonRunResult): PythonRunResult {
         result.status === "timed-out" ? "timeout" :
             result.status === "output-limit" ? "output-limit" : "runtime-error";
     const traceback: string | undefined = result.syntaxTraceback || result.runtimeTraceback || undefined;
+    const resolvedKind: PythonRunFailure["kind"] = kind === "runtime-error" && traceback && /RecursionError/.test(traceback) ? "recursion-error" : kind;
     const message: string = result.runnerError || traceback ||
         (result.status === "timed-out" ? "Local execution timed out." : "Local Python execution failed.");
-    return { ok: false, kind, message, traceback, stdout: result.stdout, stderr: result.stderr };
+    return { ok: false, kind: resolvedKind, message, traceback, stdout: result.stdout, stderr: result.stderr };
 }
 
 function friendlyImportError(error: unknown): string {

@@ -20,6 +20,7 @@ async function main() {
     await testSyntaxError();
     await testTimeout();
     await testOutputLimit();
+    await testRecursionLimit();
     await testClipboardParserAndCandidateA();
     await testGeneratedStarterPreparation();
     testCandidateASourceTemplate();
@@ -111,6 +112,20 @@ async function testOutputLimit() {
     );
     assert.strictEqual(result.status, "output-limit");
     assert.strictEqual(result.process.outputLimitExceeded, true);
+}
+
+async function testRecursionLimit() {
+    const result = await runLocalPython(
+        python,
+        {
+            solutionPath: path.join(fixtures, "recursive_solution.py"),
+            method: "countdown",
+            args: [250],
+        },
+        { timeoutMs: 3000, outputLimitBytes: 1024 * 1024, recursionLimit: 100 },
+    );
+    assert.strictEqual(result.status, "runtime-error");
+    assert.match(result.runtimeTraceback || "", /RecursionError/);
 }
 
 async function testClipboardParserAndCandidateA() {

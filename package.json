@@ -341,6 +341,13 @@
                         "scope": "window",
                         "description": "Maximum combined captured output from a trusted local Python execution."
                     },
+                    "leetcodePythonLocal.recursionLimit": {
+                        "type": "number",
+                        "default": 2000,
+                        "minimum": 100,
+                        "scope": "window",
+                        "description": "Python recursion limit for local runs, applied before loading your solution."
+                    },
                     "leetcodePythonLocal.enableCodeLens": {
                         "type": "boolean",
                         "default": true,

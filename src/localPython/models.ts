@@ -111,7 +111,7 @@ export interface PythonRunSuccess {
 
 export interface PythonRunFailure {
     ok: false;
-    kind: "syntax-error" | "runtime-error" | "timeout" | "output-limit" | "runner-error";
+    kind: "syntax-error" | "runtime-error" | "recursion-error" | "timeout" | "output-limit" | "runner-error";
     message: string;
     traceback?: string;
     stdout: string;
