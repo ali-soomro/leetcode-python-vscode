@@ -347,6 +347,12 @@
                         "scope": "window",
                         "description": "Show the Python-local Run locally CodeLens for LeetCode Python files."
                     },
+                    "leetcodePythonLocal.prepareGeneratedStarters": {
+                        "type": "boolean",
+                        "default": true,
+                        "scope": "window",
+                        "description": "Prepare newly generated Python LeetCode starters for local Pylance and runner support. Existing solution files are never rewritten."
+                    },
                     "leetcode.hideSolved": {
                         "type": "boolean",
                         "default": false,

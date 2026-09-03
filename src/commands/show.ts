@@ -28,6 +28,7 @@ import * as wsl from "../utils/wslUtils";
 import { leetCodePreviewProvider } from "../webview/leetCodePreviewProvider";
 import { leetCodeSolutionProvider } from "../webview/leetCodeSolutionProvider";
 import * as list from "./list";
+import * as localPython from "./localPython";
 import { getLeetCodeEndpoint } from "./plugin";
 import { globalState } from "../globalState";
 
@@ -190,7 +191,14 @@ async function showProblemInternal(node: IProblem): Promise<void> {
         const descriptionConfig: IDescriptionConfiguration = settingUtils.getDescriptionConfiguration();
         const needTranslation: boolean = settingUtils.shouldUseEndpointTranslation();
 
-        await leetCodeExecutor.showProblem(node, language, finalPath, descriptionConfig.showInComment, needTranslation);
+        const created: boolean = await leetCodeExecutor.showProblem(node, language, finalPath, descriptionConfig.showInComment, needTranslation);
+        if (created && (language === "python" || language === "python3") && vscode.workspace.getConfiguration("leetcodePythonLocal").get<boolean>("prepareGeneratedStarters", true)) {
+            try {
+                await localPython.prepareNewUpstreamPythonStarter(finalPath);
+            } catch (error) {
+                leetCodeChannel.appendLine(`Could not prepare the new Python starter for local use: ${error}`);
+            }
+        }
         const promises: any[] = [
             vscode.window.showTextDocument(vscode.Uri.file(finalPath), {
                 preview: false,

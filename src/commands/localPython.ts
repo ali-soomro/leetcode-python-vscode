@@ -15,6 +15,7 @@ import {
     PythonRunSuccess,
 } from "../localPython/models";
 import { localPythonOutput } from "../localPython/output";
+import { prepareNewPythonStarter } from "../localPython/generatedStarter";
 import {
     createClipboardProblemPackage,
     readCases,
@@ -55,6 +56,11 @@ export async function importStarterFromClipboard(): Promise<void> {
     } catch (error) {
         await vscode.window.showErrorMessage(`Could not import starter: ${friendlyImportError(error)}`);
     }
+}
+
+/** Prepare an upstream-created Python starter only while it is still new. */
+export async function prepareNewUpstreamPythonStarter(filePath: string): Promise<void> {
+    await prepareNewPythonStarter(getPythonPath(), filePath);
 }
 
 export async function runActivePythonSolution(uri?: vscode.Uri): Promise<void> {

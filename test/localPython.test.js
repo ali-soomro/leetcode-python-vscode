@@ -7,6 +7,7 @@ const { compareRun } = require("../out/src/localPython/comparators");
 const { runLocalPython } = require("../out/src/localPython/runner");
 const { prepareCandidateASourceDetailed } = require("../out/src/localPython/sourceTemplate");
 const { parseClipboardStarter } = require("../out/src/localPython/pythonAst");
+const { prepareNewPythonStarter } = require("../out/src/localPython/generatedStarter");
 
 const root = path.resolve(__dirname, "..");
 const fixtures = path.join(root, "test", "fixtures");
@@ -20,6 +21,7 @@ async function main() {
     await testTimeout();
     await testOutputLimit();
     await testClipboardParserAndCandidateA();
+    await testGeneratedStarterPreparation();
     testCandidateASourceTemplate();
     testComparators();
     console.log("local Python tests passed");
@@ -135,6 +137,23 @@ async function testClipboardParserAndCandidateA() {
         );
         assert.strictEqual(result.status, "ok");
         assert.strictEqual(result.returnValue, null);
+    } finally {
+        fs.rmSync(directory, { recursive: true, force: true });
+    }
+}
+
+async function testGeneratedStarterPreparation() {
+    const directory = fs.mkdtempSync(path.join(os.tmpdir(), "leetcode-python-generated-"));
+    const solutionPath = path.join(directory, "solution.py");
+    const source = "# @lc app=leetcode id=206 lang=python3\n# @lc code=start\nclass Solution:\n    def reverseList(self, head: Optional[ListNode]) -> Optional[ListNode]:\n# @lc code=end\n";
+    try {
+        fs.writeFileSync(solutionPath, source, "utf8");
+        const prepared = await prepareNewPythonStarter(python, solutionPath);
+        assert.deepStrictEqual(prepared.addedPlatformTypes, ["ListNode"]);
+        const saved = fs.readFileSync(solutionPath, "utf8");
+        assert.match(saved, /from typing import Optional/);
+        assert.match(saved, /class ListNode:/);
+        assert.match(saved, /        pass/);
     } finally {
         fs.rmSync(directory, { recursive: true, force: true });
     }
