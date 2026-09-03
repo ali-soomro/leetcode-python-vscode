@@ -216,6 +216,22 @@ function testComparators() {
 
     const mutatedResult = Object.assign({}, result, { mutated: true, postArgs: [[7, 2, 11, 15], 9] });
     assert.match(compareRun(caseDefinition, mutatedResult).label, /mutated arguments not asserted/);
+
+    const postCallCase = Object.assign({}, caseDefinition, { expectedPostArgs: [[2, 7, 11, 15], 9] });
+    assert.strictEqual(compareRun(postCallCase, result).label, "Local runner does not support this case");
+
+    const toleranceCase = {
+        name: "Explicit float tolerance",
+        args: [],
+        oracle: {
+            kind: "user-assertion",
+            comparator: { kind: "numeric-tolerance", absoluteTolerance: 0.01, relativeTolerance: 0 },
+            expected: 1,
+            provenance: "test",
+        },
+    };
+    const toleranceResult = Object.assign({}, result, { returnValue: 1.005 });
+    assert.strictEqual(compareRun(toleranceCase, toleranceResult).label, "Passed local assertion");
 }
 
 main().catch((error) => {

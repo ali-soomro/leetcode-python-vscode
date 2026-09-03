@@ -14,8 +14,15 @@ export function compareRun(caseDefinition: LocalCase, result: PythonRunSuccess):
     if (oracle.expected === undefined) {
         return { label: "Local runner does not support this case", qualified: false, detail: "The assertion has no expected result." };
     }
+    if (caseDefinition.expectedPostArgs) {
+        return {
+            label: "Local runner does not support this case",
+            qualified: false,
+            detail: "Post-call argument assertions are reserved for a later local-runner release.",
+        };
+    }
     const comparator: Comparator = oracle.comparator || { kind: "ordered-equality" };
-    if (result.mutated && !caseDefinition.expectedPostArgs && oracle.expected === null && comparator.kind === "ordered-equality") {
+    if (result.mutated && oracle.expected === null && comparator.kind === "ordered-equality") {
         return {
             label: "Local runner does not support this case",
             qualified: false,
@@ -28,7 +35,7 @@ export function compareRun(caseDefinition: LocalCase, result: PythonRunSuccess):
     if (!matches) {
         return { label: `Failed ${source}`, passed: false, qualified: false };
     }
-    if (result.mutated && !caseDefinition.expectedPostArgs) {
+    if (result.mutated) {
         return {
             label: `Passed ${source} (mutated arguments not asserted)`,
             passed: true,

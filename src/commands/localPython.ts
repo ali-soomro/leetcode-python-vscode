@@ -264,10 +264,37 @@ async function chooseComparator(): Promise<Comparator | undefined> {
         { label: "Unordered sequence", detail: "Order-insensitive; duplicate counts matter", value: { kind: "unordered-sequence" } },
         { label: "Set equality", detail: "Order- and duplicate-insensitive", value: { kind: "set-equality" } },
         { label: "Any valid index pair", detail: "Validates a pair against arguments 0 (array) and 1 (target)", value: { kind: "any-valid-index-pair", arrayArg: 0, targetArg: 1 } },
-        { label: "Numeric tolerance", detail: "Uses an explicit absolute tolerance", value: { kind: "numeric-tolerance", absoluteTolerance: 0.000001, relativeTolerance: 0 } },
+        { label: "Numeric tolerance", detail: "Prompts for explicit absolute and relative tolerances", value: { kind: "numeric-tolerance" } },
     ];
     const choice = await vscode.window.showQuickPick(choices, { placeHolder: "Choose how to compare this case" });
-    return choice ? choice.value : undefined;
+    if (!choice) {
+        return undefined;
+    }
+    if (choice.value.kind !== "numeric-tolerance") {
+        return choice.value;
+    }
+    const absoluteTolerance: number | undefined = await promptNonNegativeNumber("Absolute tolerance", "0.000001");
+    if (absoluteTolerance === undefined) {
+        return undefined;
+    }
+    const relativeTolerance: number | undefined = await promptNonNegativeNumber("Relative tolerance", "0");
+    if (relativeTolerance === undefined) {
+        return undefined;
+    }
+    return { kind: "numeric-tolerance", absoluteTolerance, relativeTolerance };
+}
+
+async function promptNonNegativeNumber(prompt: string, value: string): Promise<number | undefined> {
+    const entered: string | undefined = await vscode.window.showInputBox({
+        prompt,
+        value,
+        validateInput: (candidate: string): string | undefined => {
+            const number: number = Number(candidate);
+            return Number.isFinite(number) && number >= 0 ? undefined : "Enter a finite non-negative number.";
+        },
+        ignoreFocusOut: true,
+    });
+    return entered === undefined ? undefined : Number(entered);
 }
 
 function validateJsonArray(value: string): string | undefined {
