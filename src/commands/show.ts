@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 import * as _ from "lodash";
+import * as fse from "fs-extra";
 import * as path from "path";
 import * as unescapeJS from "unescape-js";
 import * as vscode from "vscode";
@@ -28,9 +29,9 @@ import * as wsl from "../utils/wslUtils";
 import { leetCodePreviewProvider } from "../webview/leetCodePreviewProvider";
 import { leetCodeSolutionProvider } from "../webview/leetCodeSolutionProvider";
 import * as list from "./list";
-import * as localPython from "./localPython";
 import { getLeetCodeEndpoint } from "./plugin";
 import { globalState } from "../globalState";
+import { preparePythonStarterForPylance } from "../pythonStarter/pylancePreparation";
 
 export async function previewProblem(input: IProblem | vscode.Uri, isSideMode: boolean = false): Promise<void> {
     let node: IProblem;
@@ -192,12 +193,8 @@ async function showProblemInternal(node: IProblem): Promise<void> {
         const needTranslation: boolean = settingUtils.shouldUseEndpointTranslation();
 
         const created: boolean = await leetCodeExecutor.showProblem(node, language, finalPath, descriptionConfig.showInComment, needTranslation);
-        if (created && (language === "python" || language === "python3") && vscode.workspace.getConfiguration("leetcodePythonLocal").get<boolean>("prepareGeneratedStarters", true)) {
-            try {
-                await localPython.prepareNewUpstreamPythonStarter(finalPath);
-            } catch (error) {
-                leetCodeChannel.appendLine(`Could not prepare the new Python starter for local use: ${error}`);
-            }
+        if (created && (language === "python" || language === "python3")) {
+            await prepareNewPythonStarterForPylance(finalPath);
         }
         const promises: any[] = [
             vscode.window.showTextDocument(vscode.Uri.file(finalPath), {
@@ -218,6 +215,15 @@ async function showProblemInternal(node: IProblem): Promise<void> {
         await Promise.all(promises);
     } catch (error) {
         await promptForOpenOutputChannel(`${error} Please open the output channel for details.`, DialogType.error);
+    }
+}
+
+/** Only freshly generated Python files are changed; existing work is never rewritten. */
+async function prepareNewPythonStarterForPylance(filePath: string): Promise<void> {
+    const source: string = await fse.readFile(filePath, "utf8");
+    const prepared: string = preparePythonStarterForPylance(source);
+    if (prepared !== source) {
+        await fse.writeFile(filePath, prepared, "utf8");
     }
 }
 
