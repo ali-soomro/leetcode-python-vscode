@@ -39,6 +39,9 @@
         "onCommand:leetcode.submitSolution",
         "onCommand:leetcode.switchDefaultLanguage",
         "onCommand:leetcode.problems.sort",
+        "onCommand:leetcodePythonLocal.importStarter",
+        "onCommand:leetcodePythonLocal.runLocal",
+        "onCommand:leetcodePythonLocal.addCase",
         "onView:leetCodeExplorer"
     ],
     "main": "./out/src/extension",
@@ -141,6 +144,21 @@
                 "title": "Sort Problems",
                 "category": "LeetCode",
                 "icon": "$(sort-precedence)"
+            },
+            {
+                "command": "leetcodePythonLocal.importStarter",
+                "title": "Import Python Starter from Clipboard",
+                "category": "LeetCode Python Local"
+            },
+            {
+                "command": "leetcodePythonLocal.runLocal",
+                "title": "Run Locally",
+                "category": "LeetCode Python Local"
+            },
+            {
+                "command": "leetcodePythonLocal.addCase",
+                "title": "Add Local Assertion Case",
+                "category": "LeetCode Python Local"
             }
         ],
         "viewsContainers": {
@@ -262,6 +280,16 @@
             "editor/context": [
                 {
                     "submenu": "leetcode.editorAction"
+                },
+                {
+                    "command": "leetcodePythonLocal.runLocal",
+                    "when": "editorLangId == python",
+                    "group": "navigation@20"
+                },
+                {
+                    "command": "leetcodePythonLocal.addCase",
+                    "when": "editorLangId == python",
+                    "group": "navigation@21"
                 }
             ],
             "leetcode.editorAction": [
@@ -293,6 +321,45 @@
             {
                 "title": "LeetCode",
                 "properties": {
+                    "leetcodePythonLocal.pythonPath": {
+                        "type": "string",
+                        "default": "python3",
+                        "scope": "window",
+                        "description": "Python interpreter used only for local LeetCode Python starter parsing and execution."
+                    },
+                    "leetcodePythonLocal.timeoutMs": {
+                        "type": "number",
+                        "default": 3000,
+                        "minimum": 100,
+                        "scope": "window",
+                        "description": "Maximum time for a trusted local Python execution."
+                    },
+                    "leetcodePythonLocal.outputLimitBytes": {
+                        "type": "number",
+                        "default": 1048576,
+                        "minimum": 1024,
+                        "scope": "window",
+                        "description": "Maximum combined captured output from a trusted local Python execution."
+                    },
+                    "leetcodePythonLocal.recursionLimit": {
+                        "type": "number",
+                        "default": 2000,
+                        "minimum": 100,
+                        "scope": "window",
+                        "description": "Python recursion limit for local runs, applied before loading your solution."
+                    },
+                    "leetcodePythonLocal.enableCodeLens": {
+                        "type": "boolean",
+                        "default": true,
+                        "scope": "window",
+                        "description": "Show the Python-local Run locally CodeLens for LeetCode Python files."
+                    },
+                    "leetcodePythonLocal.prepareGeneratedStarters": {
+                        "type": "boolean",
+                        "default": true,
+                        "scope": "window",
+                        "description": "Prepare newly generated Python LeetCode starters for local Pylance and runner support. Existing solution files are never rewritten."
+                    },
                     "leetcode.hideSolved": {
                         "type": "boolean",
                         "default": false,
@@ -713,6 +780,7 @@
     "scripts": {
         "vscode:prepublish": "npm run compile",
         "compile": "tsc -p ./",
+        "test": "npm run compile && node test/localPython.test.js",
         "watch": "tsc -watch -p ./",
         "lint": "tslint --project tsconfig.json -e src/*.d.ts -t verbose",
         "build": "vsce package",
@@ -726,6 +794,7 @@
         "@types/node": "^14.14.33",
         "@types/require-from-string": "^1.2.0",
         "@types/vscode": "1.57.0",
+        "@vscode/vsce": "2.22.0",
         "tslint": "^5.20.1",
         "typescript": "^4.3.2"
     },

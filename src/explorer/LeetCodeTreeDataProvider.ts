@@ -12,6 +12,7 @@ import { globalState } from "../globalState";
 
 export class LeetCodeTreeDataProvider implements vscode.TreeDataProvider<LeetCodeNode> {
     private context: vscode.ExtensionContext;
+    private ensureInheritedFeatures: (() => Promise<void>) | undefined;
 
     private onDidChangeTreeDataEvent: vscode.EventEmitter<LeetCodeNode | undefined | null> = new vscode.EventEmitter<
         LeetCodeNode | undefined | null
@@ -19,8 +20,9 @@ export class LeetCodeTreeDataProvider implements vscode.TreeDataProvider<LeetCod
     // tslint:disable-next-line:member-ordering
     public readonly onDidChangeTreeData: vscode.Event<any> = this.onDidChangeTreeDataEvent.event;
 
-    public initialize(context: vscode.ExtensionContext): void {
+    public initialize(context: vscode.ExtensionContext, ensureInheritedFeatures?: () => Promise<void>): void {
         this.context = context;
+        this.ensureInheritedFeatures = ensureInheritedFeatures;
     }
 
     public async refresh(): Promise<void> {
@@ -58,7 +60,10 @@ export class LeetCodeTreeDataProvider implements vscode.TreeDataProvider<LeetCod
         };
     }
 
-    public getChildren(element?: LeetCodeNode | undefined): vscode.ProviderResult<LeetCodeNode[]> {
+    public async getChildren(element?: LeetCodeNode | undefined): Promise<LeetCodeNode[]> {
+        if (this.ensureInheritedFeatures) {
+            await this.ensureInheritedFeatures();
+        }
         if (!leetCodeManager.getUser()) {
             return [
                 new LeetCodeNode(
