@@ -20,14 +20,13 @@ export class CustomCodeLensProvider implements vscode.CodeLensProvider {
 
     public provideCodeLenses(document: vscode.TextDocument): vscode.ProviderResult<vscode.CodeLens[]> {
         const shortcuts: string[] = getEditorShortcuts();
+        if (!shortcuts) {
+            return;
+        }
+
         const content: string = document.getText();
         const matchResult: RegExpMatchArray | null = content.match(/@lc app=.* id=(.*) lang=.*/);
         if (!matchResult) {
-            return undefined;
-        }
-        const localPythonEnabled: boolean = vscode.workspace.getConfiguration("leetcodePythonLocal")
-            .get<boolean>("enableCodeLens", true) && document.languageId === "python" && /@lc app=.* id=.* lang=python3?\b/.test(content);
-        if ((!shortcuts || shortcuts.length === 0) && !localPythonEnabled) {
             return undefined;
         }
         const nodeId: string | undefined = matchResult[1];
@@ -60,14 +59,6 @@ export class CustomCodeLensProvider implements vscode.CodeLensProvider {
             codeLens.push(new vscode.CodeLens(range, {
                 title: "Test",
                 command: "leetcode.testSolution",
-                arguments: [document.uri],
-            }));
-        }
-
-        if (localPythonEnabled) {
-            codeLens.push(new vscode.CodeLens(range, {
-                title: "Run locally",
-                command: "leetcodePythonLocal.runLocal",
                 arguments: [document.uri],
             }));
         }
