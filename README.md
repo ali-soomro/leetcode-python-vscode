@@ -33,6 +33,10 @@ The initial local workflow is deliberately separate from the inherited remote
    context menu, or Python LeetCode CodeLens. It runs only in a trusted
    workspace, with a timeout and output cap.
 
+Using one of these local commands does not bootstrap the inherited remote CLI,
+session, or provider features. Opening the inherited LeetCode explorer or
+using one of its remote commands initializes those legacy features on demand.
+
 For local linked-list and tree arguments, use explicit JSON tags in a case:
 
 ```json
